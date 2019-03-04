@@ -2,130 +2,16 @@
 <html>
   <head>
     <title>Jarvis</title>
-    <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; list-style: none; }
-      body { font: 20px Calibri; }
-      .in-container {display: block; height: 30vh;position: relative;}
-      #in, #out {display: block;}
-      #in {width: 30vw; height: 40px;position: absolute; left: 50%; margin-left: -15vw; top: 50%; margin-top: -20px; font-size: 30px;}
-      .panels {width: 30vw; height: 60px;position: absolute; left: 50%; margin-left: -15vw; top: 50%; margin-top: -90px; display: none;-webkit-user-select: none;}
-      .panels ul {width: 30vw; height: 60px;display: flex; flex-direction: row; justify-content: space-between; padding: 0 20px;-webkit-user-select: none;}
-      .panels ul li {display: inline-block; height: 60px; width: 4vw; border: 1px solid rgba(0,0,0,0.1);cursor: pointer;}
-      #out {height: 70vh; display: block;width: 60vw; margin-left: 20vw;overflow:auto;color:#222;}
-    </style>
+    <link rel="stylesheet" type="text/css" href="main.css">
   </head>
   <body>
-    <div class="in-container"><div class="panels"><ul><li data-color="1"></li><li data-color="1"></li><li data-color="1"></li><li data-color="1"></li><li data-color="1"></li></ul></div><input id="in" autocomplete="off" /></div>
+    <div class="in-container">
+      <input id="in" autocomplete="off" />
+    </div>
     <div id="out"></div>
 
     <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
-    <script>
-      $(function() {
-        var socket = io();
-        var $inp = document.getElementById('in');
-        var $out = document.getElementById('out');
-
-        var initSpeaker = function () {
-          var msg = new SpeechSynthesisUtterance();
-          var voices = window.speechSynthesis.getVoices();
-          var ruVoices = voices.filter(v => v.lang == 'ru-RU')
-          var russinaVoice = ruVoices.find(v => v.name == 'Yuri') || ruVoices[Math.floor(Math.random()*ruVoices.length)];
-          msg.volume = 1;
-          msg.rate = 1.5;
-          msg.pitch = 0 ;
-
-          return {
-            speak: function(text) {
-              msg.text = text;
-              speechSynthesis.speak(msg);
-            }
-          }
-        }
-        var voice = initSpeaker();
-
-        socket.on('new response', function(msg){
-          emptyIn();
-          print(msg);
-          // $($out).scrollTop($($out).height());
-          $($out).animate({ scrollTop: $($out).prop("scrollHeight") - $($out).height() }, 0);
-        });
-
-        socket.on('new jarvis', function(msg){
-          emptyIn();
-          if (msg && msg.indexOf('http') > -1) {
-            var newItem = $('<li data-color="1">');
-            var link = $('<img />', {
-              src: msg
-            });
-            $(newItem).append(link);
-            var i = 1;
-            $($out).append(newItem);
-          }
-          else {
-            print(msg);
-          }
-          // $($out).scrollTop($($out).height());
-          $($out).animate({ scrollTop: $($out).prop("scrollHeight") - $($out).height() }, 0);
-        });
-
-        socket.on('new panels', function(msg){
-          $('.panels').css('display','block');
-        });
-
-        var $panels = $('.panels');
-        var colors = {
-          1: "#ff4500",
-          2: "#0ff",
-          3: "#0f0",
-          4: "#f0f",
-          5: "#ff0"
-        };
-        var comb = [];
-        $panels.click(function(e) {
-          var currentColor = $(e.target).attr('data-color');
-          if (currentColor == 5) {
-            currentColor = 1;
-          } else {
-            currentColor++;
-          }
-          $(e.target).attr('data-color', currentColor);
-          $(e.target).css('background-color', colors[currentColor]);
-          for (var i = 0; i < 5; i++) {
-            comb[i] = $($('.panels li')[i]).attr('data-color');
-          };
-          socket.emit('new combination', comb);
-        });
-
-        document.addEventListener('keypress', function(key) {
-          if ( key.keyCode != 13 ) $inp.focus();
-        });
-
-        var emptyOut = function() {
-          $($out).empty();
-        };
-
-        var emptyIn = function() {
-          $($inp).val('');
-        };
-
-        var print = function(text) {
-          voice.speak(text);
-
-          var newItem = $('<li>').text(text.charAt(0));
-          var i = 1;
-          $($out).append(newItem);
-          setInterval(function(){
-            $(newItem).text($(newItem).text() + text.charAt(i++));
-          }, 50);
-        };
-
-        $($inp).bind('input', function() {
-          var value = $(this).val();
-          socket.emit('new message', value);
-        });
-
-      });
-    </script>
+    <script src="client.js"></script>
   </body>
 </html>

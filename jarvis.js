@@ -1,16 +1,17 @@
-var app = require('express')();
+var express = require('express');
+var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-var fs = require('fs');
 var rounds = require('./configs/initial.json').rounds;
+
+app.get('/', function(req, res, next) {
+  init();
+  next();
+});
+app.use(express.static("client"));
 
 var roundIndex;
 var successArr;
-
-app.get('/', function(req, res) {
-  init();
-  res.sendFile(__dirname + '/client/index.html');
-});
 
 var init = function() {
   roundIndex = -1;
@@ -48,16 +49,13 @@ var triggerOutputs = function(outputs) {
   }
 }
 
-var triggerSingleOutput = function(output) {
-  console.log('Triggering single output');
-};
-
 var changeRound = function() {
   ++roundIndex;
   console.log('Changing round to ' + roundIndex);
 
   var round = rounds[roundIndex];
   successArr = round.success;
+  console.log('Success arr: ' + successArr.join(', '));
 
   triggerOutputs(round.output);
 };
