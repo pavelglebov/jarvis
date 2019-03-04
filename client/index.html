@@ -26,6 +26,24 @@
         var $inp = document.getElementById('in');
         var $out = document.getElementById('out');
 
+        var initSpeaker = function () {
+          var msg = new SpeechSynthesisUtterance();
+          var voices = window.speechSynthesis.getVoices();
+          var ruVoices = voices.filter(v => v.lang == 'ru-RU')
+          var russinaVoice = ruVoices.find(v => v.name == 'Yuri') || ruVoices[Math.floor(Math.random()*ruVoices.length)];
+          msg.volume = 1;
+          msg.rate = 1.5;
+          msg.pitch = 0 ;
+
+          return {
+            speak: function(text) {
+              msg.text = text;
+              speechSynthesis.speak(msg);
+            }
+          }
+        }
+        var voice = initSpeaker();
+
         socket.on('new response', function(msg){
           emptyIn();
           print(msg);
@@ -35,7 +53,7 @@
 
         socket.on('new jarvis', function(msg){
           emptyIn();
-          if (msg.indexOf('http') > -1) {
+          if (msg && msg.indexOf('http') > -1) {
             var newItem = $('<li data-color="1">');
             var link = $('<img />', {
               src: msg
@@ -92,6 +110,8 @@
         };
 
         var print = function(text) {
+          voice.speak(text);
+
           var newItem = $('<li>').text(text.charAt(0));
           var i = 1;
           $($out).append(newItem);
