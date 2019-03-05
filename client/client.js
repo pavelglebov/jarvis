@@ -3,48 +3,6 @@ $(function() {
   let $inp = document.getElementById('in');
   let $out = document.getElementById('out');
 
-  let initSpeaker = function () {
-    let msg = new SpeechSynthesisUtterance();
-    let voices = window.speechSynthesis.getVoices();
-    let ruVoices = voices.filter(v => v.lang == 'ru-RU')
-    let russinaVoice = ruVoices.find(v => v.name == 'Yuri') || ruVoices[Math.floor(Math.random()*ruVoices.length)];
-    msg.volume = 1;
-    msg.rate = 1.5;
-    msg.pitch = 0 ;
-
-    return {
-      speak: function(text) {
-        msg.text = text;
-        speechSynthesis.speak(msg);
-      }
-    }
-  }
-  let voice = initSpeaker();
-
-  socket.on('new response', function(msg){
-    emptyIn();
-    print(msg);
-    $($out).animate({ scrollTop: $($out).prop("scrollHeight") - $($out).height() }, 0);
-  });
-
-  socket.on('new jarvis', function(msg){
-    emptyIn();
-    if (msg && msg.indexOf('http') > -1) {
-      let newItem = $('<li data-color="1">');
-      let link = $('<img />', {
-        src: msg
-      });
-      $(newItem).append(link);
-      let i = 1;
-      $($out).append(newItem);
-    }
-    else {
-      print(msg);
-    }
-    // $($out).scrollTop($($out).height());
-    $($out).animate({ scrollTop: $($out).prop("scrollHeight") - $($out).height() }, 0);
-  });
-
   document.addEventListener('keypress', function(key) {
     if ( key.keyCode != 13 ) $inp.focus();
   });
@@ -63,7 +21,7 @@ $(function() {
     let newItem = $('<li>');
     let itemPlayButton = $('<div class="play-sound-button">');
     itemPlayButton.append('&#9658;');
-    let itemText = $('<span>').text(text.charAt(0));
+    let itemText = $('<span>').text(text ? text.charAt(0) : '');
     newItem.append(itemPlayButton).append(itemText);
     $($out).append(newItem);
 
@@ -86,5 +44,58 @@ $(function() {
   $($inp).bind('input', function() {
     let value = $(this).val();
     socket.emit('new message', value);
+  });
+
+  let initSpeaker = function () {
+    let msg = new SpeechSynthesisUtterance();
+    let voices = window.speechSynthesis.getVoices();
+    let ruVoices = voices.filter(v => v.lang == 'ru-RU')
+    let russinaVoice = ruVoices.find(v => v.name == 'Yuri') || ruVoices[Math.floor(Math.random()*ruVoices.length)];
+    msg.volume = 1;
+    msg.rate = 1.5;
+    msg.pitch = 0 ;
+
+    return {
+      speak: function(text) {
+        msg.text = text;
+        speechSynthesis.speak(msg);
+      }
+    }
+  }
+  let voice = initSpeaker();
+
+  socket.on('new response', function(msg) {
+    emptyIn();
+    print(msg);
+    $($out).animate({ scrollTop: $($out).prop("scrollHeight") - $($out).height() }, 0);
+  });
+
+  socket.on('new jarvis', function(msg){
+    emptyIn();
+    if (msg && msg.indexOf('http') > -1) {
+      let newItem = $('<li data-color="1">');
+      let link = $('<img />', {
+        src: msg
+      });
+      $(newItem).append(link);
+      let i = 1;
+      $($out).append(newItem);
+    }
+    else {
+      print(msg);
+    }
+    $($out).animate({ scrollTop: $($out).prop("scrollHeight") - $($out).height() }, 0);
+  });
+
+  socket.on('restore session', function(arr) {
+    emptyIn();
+    arr.forEach(msg => {
+      let newItem = $('<li>');
+      let itemPlayButton = $('<div class="play-sound-button">');
+      itemPlayButton.append('&#9658;');
+      let itemText = $('<span>').text(msg || '');
+      newItem.append(itemPlayButton).append(itemText);
+      $($out).append(newItem);
+    });
   });
 });

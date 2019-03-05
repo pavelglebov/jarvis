@@ -1,43 +1,107 @@
-var express = require('express');
-var app = express();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
-var rounds = require('./configs/initial.json').rounds;
+const express = require('express');
+const app = express();
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
+const rounds = require('./configs/initial').rounds;
+const Session = require('./db/main');
+
+var args = process.argv.slice(2);
 
 app.get('/', function(req, res, next) {
   init();
+  initSaveInterval();
   next();
 });
 app.use(express.static("client"));
 
-var roundIndex;
-var successArr;
+let conf = {
+  roundIndex: -1,
+  successArr: [],
+  session: {},
+  saveQueue: [],
+  socket: {},
+  debounce: false,
+  prevMsg: '',
+  jarvis: [
+    "Джарвис - это я",
+    "Да да",
+    "Мм?",
+    "Я помогу вам",
+    "Джжаааааарвииииииисссс",
+    "",
+    "",
+    "Я вас слушаю",
+    "Джа-джа-джарвис-джаарвиис",
+    "http://cs624025.vk.me/v624025130/1ffbe/DdYgLRzsr5A.jpg"
+  ]
+};
 
-var init = function() {
-  roundIndex = -1;
-  successArr = [];
+const init = function() {
+  if (args && args[0]) {
+    return restoreSession();
+  }
+  else {
+    conf.session = new Session({
+      created: new Date(),
+      round: 0,
+      messages: [],
+      feedback: []
+    });
+    saveSession(conf.session);
+  }
+
+  conf.roundIndex = -1;
+  conf.successArr = [];
   changeRound();
 }
 
-var processMessage = function(msg) {
+const restoreSession = function() {
+    const id = args[0];
+
+    Session.findById(id, (error, doc) => {
+      if (error) {
+        return console.log(`Error has occurred: ${error}`);
+      }
+
+      console.log('Restoring db by id: ' + doc._id);
+      console.log(doc);
+      conf.session = doc;
+
+      conf.restoreMode = true;
+    })
+};
+
+const processMessage = function(msg) {
   console.log('Processing message: ' + msg);
-  if (successArr && successArr.indexOf(msg) > -1) {
+  if (conf.successArr && conf.successArr.indexOf(msg) > -1) {
     changeRound();
   }
+
+  if (msg.indexOf(conf.prevMsg) > -1
+      && msg.length > conf.prevMsg.length
+      && conf.prevMsg.length) {
+    conf.session.feedback.pop();
+    conf.session.feedback.push(msg);
+  } else if (conf.prevMsg.indexOf(msg) > -1
+      && conf.prevMsg.length > msg.length) {
+    // do nothing
+  } else {
+    conf.session.feedback.push(msg);
+  }
+  conf.prevMsg = msg;
 }
 
-var triggerOutputs = function(outputs) {
+const triggerOutputs = function(outputs) {
   console.log('Triggering outputs');
-  console.log(outputs && outputs.length);
 
   if (outputs && outputs.length) {
-    var currentIndex = 0;
+    let currentIndex = 0;
 
-    var triggerSingleOutput = function() {
+    const triggerSingleOutput = function() {
       if (currentIndex < outputs.length) {
-        var currentOutput = outputs[currentIndex];
+        const currentOutput = outputs[currentIndex];
         setTimeout(function() {
-          globalSocket.emit('new response', currentOutput.text);
+          emitMessage('new response', currentOutput.text);
           triggerSingleOutput();
         }, currentOutput.timer);
 
@@ -49,45 +113,63 @@ var triggerOutputs = function(outputs) {
   }
 }
 
-var changeRound = function() {
-  ++roundIndex;
-  console.log('Changing round to ' + roundIndex);
+const changeRound = function(restoreMode) {
+  ++conf.roundIndex;
+  console.log('Changing round to ' + conf.roundIndex);
 
-  var round = rounds[roundIndex];
-  successArr = round.success;
-  console.log('Success arr: ' + successArr.join(', '));
+  const round = rounds[conf.roundIndex];
+  conf.successArr = round.success;
 
-  triggerOutputs(round.output);
+  if (!restoreMode) {
+    triggerOutputs(round.output);
+  }
+
+  conf.session.round = conf.roundIndex;
 };
 
-var jarvis = [
-  "Джарвис - это я",
-  "Да да",
-  "Мм?",
-  "Я помогу вам",
-  "Джжаааааарвииииииисссс",
-  "",
-  "",
-  "Я вас слушаю",
-  "Джа-джа-джарвис-джаарвиис",
-  "http://cs624025.vk.me/v624025130/1ffbe/DdYgLRzsr5A.jpg"
-];
-
-var globalSocket;
-
 io.on('connection', function(socket) {
-  globalSocket = socket;
+  conf.socket = socket;
 
-  globalSocket.on('new message', function(msg) {
+  if (conf.restoreMode) {
+    emitMessage('restore session', conf.session.messages);
+    conf.roundIndex = conf.session.round - 1;
+    conf.successArr = [];
+    changeRound(true);
+  }
+
+  conf.socket.on('new message', function(msg) {
     if (msg.toLowerCase() == 'jarvis' ||
       msg.toLowerCase() == 'джарвис') {
-        globalSocket.emit('new jarvis', jarvis[Math.floor(Math.random() * (jarvis.length+1))]);
+        emitMessage('new jarvis',
+          conf.jarvis[Math.floor(Math.random() * (conf.jarvis.length+1))]);
     }
 
     processMessage(msg);
   });
-
 });
+
+const emitMessage = function(type, msg) {
+  conf.socket.emit(type, msg);
+
+  conf.session.messages.push(msg);
+};
+
+const saveSession = function() {
+  conf.session.save((error, doc) => {
+    if (error) {
+      return false;
+    }
+    console.log('Session saved: ' + doc._id);
+    console.log(doc);
+    return false;
+  });
+};
+
+const initSaveInterval = function() {
+  setInterval(() => {
+    saveSession();
+  }, 2000);
+};
 
 http.listen(3000, function() {
   console.log('listening on *:3000');
