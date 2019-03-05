@@ -46,23 +46,29 @@ $(function() {
     socket.emit('new message', value);
   });
 
-  let initSpeaker = function () {
-    let msg = new SpeechSynthesisUtterance();
-    let voices = window.speechSynthesis.getVoices();
-    let ruVoices = voices.filter(v => v.lang == 'ru-RU')
-    let russinaVoice = ruVoices.find(v => v.name == 'Yuri') || ruVoices[Math.floor(Math.random()*ruVoices.length)];
-    msg.volume = 1;
-    msg.rate = 1.5;
-    msg.pitch = 0 ;
+  let voice;
 
-    return {
-      speak: function(text) {
-        msg.text = text;
-        speechSynthesis.speak(msg);
+  let initSpeaker = function () {
+    window.speechSynthesis.onvoiceschanged = function() {
+      let msg = new SpeechSynthesisUtterance();
+      let voices = speechSynthesis.getVoices();
+      let ruVoices = voices.filter(v => v.lang == 'ru-RU')
+      let russianVoice = ruVoices.find(v => v.name == 'Yuri') || ruVoices[Math.floor(Math.random()*ruVoices.length)];
+      msg.voice = russianVoice;
+  
+      msg.volume = 1;
+      msg.rate = 1.4;
+      msg.pitch = 0.8;
+  
+      voice = {
+        speak: function(text) {
+          msg.text = text;
+          speechSynthesis.speak(msg);
+        }
       }
-    }
+    };
   }
-  let voice = initSpeaker();
+  initSpeaker();
 
   socket.on('new response', function(msg) {
     emptyIn();
