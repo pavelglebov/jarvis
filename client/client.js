@@ -72,14 +72,8 @@ $(function() {
 
   socket.on('new response', function(msg) {
     emptyIn();
-    print(msg);
-    $($out).animate({ scrollTop: $($out).prop("scrollHeight") - $($out).height() }, 0);
-  });
-
-  socket.on('new jarvis', function(msg){
-    emptyIn();
     if (msg && msg.indexOf('http') > -1) {
-      let newItem = $('<li data-color="1">');
+      let newItem = $('<li class="image-msg">');
       let link = $('<img />', {
         src: msg
       });

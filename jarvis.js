@@ -40,7 +40,8 @@ let conf = {
     "http://cs624025.vk.me/v624025130/1ffbe/DdYgLRzsr5A.jpg"
   ],
   easterEggs: {
-    "ggrc": "ЖИИ ЖИИ ЭЭР СИИИИИИИИИИИ!"
+    "ggrc": "ЖИИ ЖИИ ЭЭР СИИИИИИИИИИИ!",
+    "настя": "https://scontent-frx5-1.xx.fbcdn.net/v/t1.0-9/19399136_10208655759141017_8875901088541622775_n.jpg?_nc_cat=100&_nc_ht=scontent-frx5-1.xx&oh=e5e61ff7378fb30931b6e6c1aed42b9d&oe=5D13E275"
   }
 };
 
@@ -165,7 +166,7 @@ io.on('connection', function(socket) {
     msg = msg.toLowerCase().trim();
 
     if (msg == 'jarvis' || msg == 'джарвис') {
-      emitMessage('new jarvis',
+      emitMessage('new response',
         conf.jarvis[randInd(conf.jarvis.length)],
         socket);
     }
