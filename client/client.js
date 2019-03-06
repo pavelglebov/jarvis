@@ -57,7 +57,7 @@ $(function() {
       msg.voice = russianVoice;
   
       msg.volume = 1;
-      msg.rate = 1.4;
+      msg.rate = 1;
       msg.pitch = 0.8;
   
       voice = {
@@ -93,15 +93,20 @@ $(function() {
     $($out).animate({ scrollTop: $($out).prop("scrollHeight") - $($out).height() }, 0);
   });
 
+  let sessionIsRestored = false;
+
   socket.on('restore session', function(arr) {
-    emptyIn();
-    arr.forEach(msg => {
-      let newItem = $('<li>');
-      let itemPlayButton = $('<div class="play-sound-button">');
-      itemPlayButton.append('&#9658;');
-      let itemText = $('<span>').text(msg || '');
-      newItem.append(itemPlayButton).append(itemText);
-      $($out).append(newItem);
-    });
+    if (!sessionIsRestored) {
+      emptyIn();
+      arr.forEach(msg => {
+        let newItem = $('<li>');
+        let itemPlayButton = $('<div class="play-sound-button">');
+        itemPlayButton.append('&#9658;');
+        let itemText = $('<span>').text(msg || '');
+        newItem.append(itemPlayButton).append(itemText);
+        $($out).append(newItem);
+      });
+      sessionIsRestored = true;
+    }
   });
 });

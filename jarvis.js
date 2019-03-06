@@ -5,23 +5,28 @@ const io = require('socket.io')(http);
 const rounds = require('./configs/initial').rounds;
 const Session = require('./db/main');
 
-var args = process.argv.slice(2);
+const args = process.argv.slice(2);
+
+const useDb = true;
 
 app.get('/', function(req, res, next) {
-  init();
-  initSaveInterval();
+  if (useDb) {
+    init();
+    initSaveInterval();
+  }
   next();
 });
 app.use(express.static("client"));
 
 let conf = {
-  roundIndex: -1,
-  successArr: [],
-  session: {},
+  roundIndex: 0,
+  session: null,
   saveQueue: [],
   socket: {},
-  debounce: false,
   prevMsg: '',
+  restoreMode: args && args[0],
+  roundRestored: false,
+  currentDocId: null,
   jarvis: [
     "Джарвис - это я",
     "Да да",
@@ -33,29 +38,41 @@ let conf = {
     "Я вас слушаю",
     "Джа-джа-джарвис-джаарвиис",
     "http://cs624025.vk.me/v624025130/1ffbe/DdYgLRzsr5A.jpg"
-  ]
+  ],
+  easterEggs: {
+    "ggrc": "ЖИИ ЖИИ ЭЭР СИИИИИИИИИИИ!"
+  }
 };
 
-const init = function() {
-  if (args && args[0]) {
-    return restoreSession();
-  }
-  else {
-    conf.session = new Session({
-      created: new Date(),
-      round: 0,
-      messages: [],
-      feedback: []
-    });
-    saveSession(conf.session);
-  }
+let restored;
 
-  conf.roundIndex = -1;
-  conf.successArr = [];
-  changeRound();
+if (conf.restoreMode) {
+  restoreSession();
 }
 
-const restoreSession = function() {
+const init = function() {
+  if (!conf.session) {
+    if (restored) {
+      conf.session = new Session({
+        sessionCreated: new Date(),
+        round: restored.round,
+        messages: [].concat(restored.messages),
+        feedback: [].concat(restored.feedback)
+      });
+    }
+    else {
+      conf.session = new Session({
+        sessionCreated: new Date(),
+        round: 0,
+        messages: [],
+        feedback: []
+      });
+    }
+    saveSession();
+  }
+}
+
+function restoreSession() {
     const id = args[0];
 
     Session.findById(id, (error, doc) => {
@@ -65,34 +82,40 @@ const restoreSession = function() {
 
       console.log('Restoring db by id: ' + doc._id);
       console.log(doc);
+      // restored = doc.toObject();
       conf.session = doc;
-
-      conf.restoreMode = true;
-    })
+    });
 };
 
-const processMessage = function(msg) {
+const processMessage = function(msg, socket) {
   console.log('Processing message: ' + msg);
-  if (conf.successArr && conf.successArr.indexOf(msg) > -1) {
+  let successArr = rounds[conf.roundIndex] && rounds[conf.roundIndex].success;
+
+  if (successArr && successArr.indexOf(msg) > -1) {
     changeRound();
+    triggerOutputs(socket);
   }
 
-  if (msg.indexOf(conf.prevMsg) > -1
-      && msg.length > conf.prevMsg.length
-      && conf.prevMsg.length) {
-    conf.session.feedback.pop();
-    conf.session.feedback.push(msg);
-  } else if (conf.prevMsg.indexOf(msg) > -1
-      && conf.prevMsg.length > msg.length) {
-    // do nothing
-  } else {
-    conf.session.feedback.push(msg);
+  if (useDb) {
+    if (msg.indexOf(conf.prevMsg) > -1
+        && msg.length > conf.prevMsg.length
+        && conf.prevMsg.length) {
+      conf.session.feedback.pop();
+      conf.session.feedback.push(msg);
+    } else if (conf.prevMsg.indexOf(msg) > -1
+        && conf.prevMsg.length > msg.length) {
+      // do nothing
+    } else {
+      conf.session.feedback.push(msg);
+    }
+    conf.prevMsg = msg;
   }
-  conf.prevMsg = msg;
 }
 
-const triggerOutputs = function(outputs) {
+const triggerOutputs = function(socket) {
   console.log('Triggering outputs');
+
+  const outputs = rounds[conf.roundIndex].output;
 
   if (outputs && outputs.length) {
     let currentIndex = 0;
@@ -101,7 +124,7 @@ const triggerOutputs = function(outputs) {
       if (currentIndex < outputs.length) {
         const currentOutput = outputs[currentIndex];
         setTimeout(function() {
-          emitMessage('new response', currentOutput.text);
+          emitMessage('new response', currentOutput.text, socket);
           triggerSingleOutput();
         }, currentOutput.timer);
 
@@ -113,62 +136,87 @@ const triggerOutputs = function(outputs) {
   }
 }
 
-const changeRound = function(restoreMode) {
+const changeRound = function() {
   ++conf.roundIndex;
   console.log('Changing round to ' + conf.roundIndex);
 
-  const round = rounds[conf.roundIndex];
-  conf.successArr = round.success;
-
-  if (!restoreMode) {
-    triggerOutputs(round.output);
+  if (useDb) {
+      conf.session.round = conf.roundIndex;
+    // saveSession();
   }
-
-  conf.session.round = conf.roundIndex;
 };
 
 io.on('connection', function(socket) {
-  conf.socket = socket;
+  // if (conf.restoreMode && conf.session && !conf.roundRestored) {
+  //   conf.roundIndex = conf.session.round;
+  //   changeRound();
 
-  if (conf.restoreMode) {
-    emitMessage('restore session', conf.session.messages);
-    conf.roundIndex = conf.session.round - 1;
-    conf.successArr = [];
-    changeRound(true);
+  //   conf.roundRestored = true;
+  // }
+  if (useDb && conf.restoreMode && conf.session && !conf.roundRestored) {
+    conf.roundIndex = conf.session.round;
+    emitMessage('restore session', conf.session.messages, socket);
+    triggerOutputs(socket);
+
+    conf.roundRestored = true;
   }
 
-  conf.socket.on('new message', function(msg) {
-    if (msg.toLowerCase() == 'jarvis' ||
-      msg.toLowerCase() == 'джарвис') {
-        emitMessage('new jarvis',
-          conf.jarvis[Math.floor(Math.random() * (conf.jarvis.length+1))]);
+  socket.on('new message', function(msg) {
+    msg = msg.toLowerCase().trim();
+
+    if (msg == 'jarvis' || msg == 'джарвис') {
+      emitMessage('new jarvis',
+        conf.jarvis[randInd(conf.jarvis.length)],
+        socket);
+    }
+    if (conf.easterEggs[msg]) {
+      emitMessage('new response',
+        conf.easterEggs[msg],
+        socket);
+    }
+    if (msg == "подсказка") {
+      let hints = rounds[conf.roundIndex].hints;
+      hints ?
+        emitMessage('new response',
+          hints[randInd(hints.length)],
+          socket) : '';
     }
 
-    processMessage(msg);
+    processMessage(msg, socket);
   });
 });
 
-const emitMessage = function(type, msg) {
-  conf.socket.emit(type, msg);
+function randInd(length) {
+  return Math.floor(Math.random() * length);
+}
 
-  conf.session.messages.push(msg);
+const emitMessage = function(type, msg, socket) {
+  socket.emit(type, msg);
+
+  if (useDb) {
+    conf.session.messages.push(msg);
+    // saveSession();
+  }
 };
 
-const saveSession = function() {
-  conf.session.save((error, doc) => {
-    if (error) {
-      return false;
-    }
-    console.log('Session saved: ' + doc._id);
-    console.log(doc);
-    return false;
-  });
+function saveSession() {
+  if (useDb) {
+    conf.session.save((error, doc) => {
+      if (error) {
+        return console.log(`Error has occurred: ${error}`);
+      }
+      console.log('Session saved: ' + doc._id);
+      console.log(doc);
+    });
+  }
 };
 
 const initSaveInterval = function() {
-  setInterval(() => {
-    saveSession();
-  }, 2000);
+  if (useDb) {
+    setInterval(() => {
+      saveSession();
+    }, 30000);
+  }
 };
 
 http.listen(3000, function() {
