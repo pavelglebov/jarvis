@@ -58,7 +58,7 @@ $(function() {
   
       msg.volume = 1;
       msg.rate = 0.8;
-      msg.pitch = 0.8;
+      msg.pitch = 0.6;
   
       voice = {
         speak: function(text) {
