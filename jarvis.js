@@ -207,7 +207,7 @@ function handleHints(hints, socket) {
       conf.hintTimer = setTimeout(() => {
           clearTimeout(conf.hintTimer);
           conf.hintTimer = false;
-      }, 5000);
+      }, 60000);
 
       emitMessage('new response',
         hints[randInd(hints.length)],
