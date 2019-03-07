@@ -30,6 +30,7 @@ $(function() {
       $(itemText).text($(itemText).text() + text.charAt(i++));
       if (i > text.length) {
         clearInterval(int);
+        scrollTop();
       }
     }, 50);
   };
@@ -84,10 +85,12 @@ $(function() {
     else {
       print(msg);
     }
-    setTimeout(() => {
-      $($out).animate({ scrollTop: $($out).prop("scrollHeight") - $($out).height() }, 0);
-    }, 0);
+    scrollTop();
   });
+
+  function scrollTop() {
+    $($out).animate({ scrollTop: $($out).prop("scrollHeight") - $($out).height() }, 0);
+  }
 
   let sessionIsRestored = false;
 
