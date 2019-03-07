@@ -41,7 +41,8 @@ let conf = {
   ],
   easterEggs: {
     "ggrc": "ЖИИ ЖИИ ЭЭР СИИИИИИИИИИИ!",
-    "настя": "/img/nastya.png"
+    "настя": "/img/nastya.png",
+    "чингиз": "/img/chingiz.png"
   }
 };
 
@@ -175,17 +176,30 @@ io.on('connection', function(socket) {
         conf.easterEggs[msg],
         socket);
     }
-    if (msg == "подсказка") {
+    if (msg == "подсказка" || msg == "подскажи") {
       let hints = rounds[conf.roundIndex].hints;
-      hints ?
-        emitMessage('new response',
-          hints[randInd(hints.length)],
-          socket) : '';
+
+      if (hints) {
+        handleHints(hints, socket);
+      }
     }
 
     processMessage(msg, socket);
   });
 });
+
+function handleHints(hints, socket) {
+    if (!conf.hintTimer) {
+      conf.hintTimer = setTimeout(() => {
+          clearTimeout(conf.hintTimer);
+          conf.hintTimer = false;
+      }, 5000);
+
+      emitMessage('new response',
+        hints[randInd(hints.length)],
+        socket);
+    }
+}
 
 function randInd(length) {
   return Math.floor(Math.random() * length);
