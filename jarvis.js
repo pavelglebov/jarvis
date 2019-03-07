@@ -40,9 +40,9 @@ let conf = {
     "http://cs624025.vk.me/v624025130/1ffbe/DdYgLRzsr5A.jpg"
   ],
   easterEggs: {
-    "ggrc": "ЖИИ ЖИИ ЭЭР СИИИИИИИИИИИ!",
-    "настя": "/img/nastya.png",
-    "чингиз": "/img/chingiz.png"
+    "ggrc": ["ЖИИ ЖИИ ЭЭР СИИИИИИИИИИИ!"],
+    "настя": ["/img/nastya.png"],
+    "чингиз": ["/img/chingiz.png"]
   }
 };
 
@@ -92,10 +92,19 @@ function restoreSession() {
 const processMessage = function(msg, socket) {
   console.log('Processing message: ' + msg);
   let successArr = rounds[conf.roundIndex] && rounds[conf.roundIndex].success;
+  let eggs = rounds[conf.roundIndex] && rounds[conf.roundIndex].eggs;
 
   if (successArr && successArr.indexOf(msg) > -1) {
     changeRound();
     triggerOutputs(socket);
+  }
+
+  if (eggs && eggs[msg]) {
+    if (eggs[msg].length) {
+      eggs[msg].forEach((el) => {
+        emitMessage('new response', el, socket);
+      });
+    }
   }
 
   if (useDb) {
@@ -172,9 +181,11 @@ io.on('connection', function(socket) {
         socket);
     }
     if (conf.easterEggs[msg]) {
-      emitMessage('new response',
-        conf.easterEggs[msg],
-        socket);
+      conf.easterEggs[msg].forEach((m) => {
+        emitMessage('new response',
+          m,
+          socket);
+      });
     }
     if (msg == "подсказка" || msg == "подскажи") {
       let hints = rounds[conf.roundIndex].hints;

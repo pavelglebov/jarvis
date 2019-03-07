@@ -57,7 +57,7 @@ $(function() {
       msg.voice = russianVoice;
   
       msg.volume = 1;
-      msg.rate = 1;
+      msg.rate = 0.8;
       msg.pitch = 0.8;
   
       voice = {
