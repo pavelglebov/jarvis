@@ -41,7 +41,7 @@ let conf = {
   ],
   easterEggs: {
     "ggrc": "ЖИИ ЖИИ ЭЭР СИИИИИИИИИИИ!",
-    "настя": "https://scontent-frx5-1.xx.fbcdn.net/v/t1.0-9/19399136_10208655759141017_8875901088541622775_n.jpg?_nc_cat=100&_nc_ht=scontent-frx5-1.xx&oh=e5e61ff7378fb30931b6e6c1aed42b9d&oe=5D13E275"
+    "настя": "/img/nastya.png"
   }
 };
 

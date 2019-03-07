@@ -72,7 +72,7 @@ $(function() {
 
   socket.on('new response', function(msg) {
     emptyIn();
-    if (msg && msg.indexOf('http') > -1) {
+    if (msg && (msg.indexOf('http') > -1 || msg.indexOf('img/') > -1)) {
       let newItem = $('<li class="image-msg">');
       let link = $('<img />', {
         src: msg
@@ -84,7 +84,9 @@ $(function() {
     else {
       print(msg);
     }
-    $($out).animate({ scrollTop: $($out).prop("scrollHeight") - $($out).height() }, 0);
+    setTimeout(() => {
+      $($out).animate({ scrollTop: $($out).prop("scrollHeight") - $($out).height() }, 0);
+    }, 0);
   });
 
   let sessionIsRestored = false;
