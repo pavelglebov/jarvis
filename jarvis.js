@@ -1,22 +1,28 @@
+// vendors
 const express = require('express');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 
-const config = require('./configs/initial');
+// parse process arguments
+const parseArgs = require('./utils/args-parser');
+const args = parseArgs(process.argv);
+const usedb = args.usedb;
+let config = args.config || 'initial';
+
+// read config
+config = require(`./configs/${config}`);
 const rounds = config.rounds;
 const easterEggs = config.easterEggs;
 const jarvis = config.jarvis;
 
-const parseArgs = require('./utils/args-parser');
-const args = parseArgs(process.argv);
-console.log(args);
-
-const Session = require('./db/main');
-const useDb = true;
+let Session;
+if (usedb) {
+  Session = require('./db/main');
+}
 
 app.get('/', function(req, res, next) {
-  if (useDb) {
+  if (usedb) {
     init();
     initSaveInterval();
   }
@@ -71,7 +77,7 @@ function restoreSession() {
         return console.log(`Error has occurred: ${error}`);
       }
 
-      console.log('Restoring db by id: ' + doc._id);
+      console.log(`Restoring db by id: ${doc._id}`);
       console.log(doc);
       // restored = doc.toObject();
       conf.session = doc;
@@ -79,7 +85,7 @@ function restoreSession() {
 };
 
 const processMessage = function(msg, socket) {
-  console.log('Processing message: ' + msg);
+  console.log(`Processing message: ${msg}`);
   let successArr = rounds[conf.roundIndex] && rounds[conf.roundIndex].success;
   let eggs = rounds[conf.roundIndex] && rounds[conf.roundIndex].eggs;
 
@@ -96,7 +102,7 @@ const processMessage = function(msg, socket) {
     }
   }
 
-  if (useDb) {
+  if (usedb) {
     if (msg.indexOf(conf.prevMsg) > -1
         && msg.length > conf.prevMsg.length
         && conf.prevMsg.length) {
@@ -138,9 +144,9 @@ const triggerOutputs = function(socket) {
 
 const changeRound = function() {
   ++conf.roundIndex;
-  console.log('Changing round to ' + conf.roundIndex);
+  console.log(`Changing round to ${conf.roundIndex}`);
 
-  if (useDb) {
+  if (usedb) {
       conf.session.round = conf.roundIndex;
     // saveSession();
   }
@@ -153,7 +159,7 @@ io.on('connection', function(socket) {
 
   //   conf.roundRestored = true;
   // }
-  if (useDb && conf.restoreMode && conf.session && !conf.roundRestored) {
+  if (usedb && conf.restoreMode && conf.session && !conf.roundRestored) {
     conf.roundIndex = conf.session.round;
     emitMessage('restore session', conf.session.messages, socket);
     triggerOutputs(socket);
@@ -208,26 +214,26 @@ function randInd(length) {
 const emitMessage = function(type, msg, socket) {
   socket.emit(type, msg);
 
-  if (useDb) {
+  if (usedb) {
     conf.session.messages.push(msg);
     // saveSession();
   }
 };
 
 function saveSession() {
-  if (useDb) {
+  if (usedb) {
     conf.session.save((error, doc) => {
       if (error) {
         return console.log(`Error has occurred: ${error}`);
       }
-      console.log('Session saved: ' + doc._id);
+      console.log(`Session saved: ${doc._id}`);
       console.log(doc);
     });
   }
 };
 
 const initSaveInterval = function() {
-  if (useDb) {
+  if (usedb) {
     setInterval(() => {
       saveSession();
     }, 30000);
