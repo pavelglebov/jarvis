@@ -2,7 +2,12 @@ const express = require('express');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
-const rounds = require('./configs/initial').rounds;
+
+const config = require('./configs/initial');
+const rounds = config.rounds;
+const easterEggs = config.easterEggs;
+const jarvis = config.jarvis;
+
 const Session = require('./db/main');
 
 const args = process.argv.slice(2);
@@ -26,27 +31,7 @@ let conf = {
   prevMsg: '',
   restoreMode: args && args[0],
   roundRestored: false,
-  currentDocId: null,
-  jarvis: [
-    "Джарвис - это я",
-    "Мм?",
-    "Я помогу вам",
-    "Джжаааааарвииииииисссс",
-    "Джжаааааарвииииииисссс",
-    "Джжаааааарвииииииисссс",
-    "Джжаааааарвииииииисссс",
-    "Джжаааааарвииииииисссс",
-    "",
-    "",
-    "Я вас слушаю",
-    "Джа-джа-джарвис-джаарвиис",
-    "http://cs624025.vk.me/v624025130/1ffbe/DdYgLRzsr5A.jpg"
-  ],
-  easterEggs: {
-    "ggrc": ["ЖИИ ЖИИ ЭЭР СИИИИИИИИИИИ!"],
-    "настя": ["/img/nastya.png"],
-    "чингиз": ["/img/chingiz.png"]
-  }
+  currentDocId: null
 };
 
 let restored;
@@ -180,11 +165,11 @@ io.on('connection', function(socket) {
 
     if (msg == 'jarvis' || msg == 'джарвис') {
       emitMessage('new response',
-        conf.jarvis[randInd(conf.jarvis.length)],
+        jarvis[randInd(jarvis.length)],
         socket);
     }
-    if (conf.easterEggs[msg]) {
-      conf.easterEggs[msg].forEach((m) => {
+    if (easterEggs[msg]) {
+      easterEggs[msg].forEach((m) => {
         emitMessage('new response',
           m,
           socket);
