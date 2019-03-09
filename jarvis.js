@@ -8,10 +8,11 @@ const rounds = config.rounds;
 const easterEggs = config.easterEggs;
 const jarvis = config.jarvis;
 
+const parseArgs = require('./utils/args-parser');
+const args = parseArgs(process.argv);
+console.log(args);
+
 const Session = require('./db/main');
-
-const args = process.argv.slice(2);
-
 const useDb = true;
 
 app.get('/', function(req, res, next) {
