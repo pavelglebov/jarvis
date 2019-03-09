@@ -8,10 +8,11 @@ const io = require('socket.io')(http);
 const parseArgs = require('./utils/args-parser');
 const args = parseArgs(process.argv);
 const usedb = args.usedb;
+const configPath = args.configPath || './configs/';
 let config = args.config || 'initial';
 
 // read config
-config = require(`./configs/${config}`);
+config = require(`${configPath}${config}`);
 const rounds = config.rounds;
 const easterEggs = config.easterEggs;
 const jarvis = config.jarvis;
