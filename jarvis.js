@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
+const path = require('path');
 
 // parse process arguments
 const parseArgs = require('./utils/args-parser');
@@ -30,9 +31,12 @@ app.get('/', function(req, res, next) {
   next();
 });
 
-app.get('/img/:imgName', function(req, res, next) {
-  res.sendFile(__dirname +
-    `/${configPath}${configName}/img/${req.params.imgName}`);
+app.get('/img/:imgName', function(req, res) {
+  const file = path.join(__dirname,
+      `/${configPath}${configName}/img/${req.params.imgName}`);
+
+  console.log(`Sending image: ${file}`);
+  res.sendFile(file);
 });
 
 app.use(express.static("client"));
