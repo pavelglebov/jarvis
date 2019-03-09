@@ -1,7 +1,7 @@
 {
   "author": "Pavel Glebov",
   "name": "jarvis",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "jarvis",
   "dependencies": {
     "express": "~4.10.2",

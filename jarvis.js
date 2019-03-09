@@ -9,10 +9,10 @@ const parseArgs = require('./utils/args-parser');
 const args = parseArgs(process.argv);
 const usedb = args.usedb;
 const configPath = args.configPath || './configs/';
-let config = args.config || 'initial';
+const configName = args.config || 'initial';
 
 // read config
-config = require(`${configPath}${config}`);
+const config = require(`${configPath}${configName}/${configName}.json`);
 const rounds = config.rounds;
 const easterEggs = config.easterEggs;
 const jarvis = config.jarvis;
@@ -29,6 +29,12 @@ app.get('/', function(req, res, next) {
   }
   next();
 });
+
+app.get('/img/:imgName', function(req, res, next) {
+  res.sendFile(__dirname +
+    `/${configPath}${configName}/img/${req.params.imgName}`);
+});
+
 app.use(express.static("client"));
 
 let conf = {
