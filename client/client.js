@@ -15,8 +15,8 @@ $(function() {
     $($inp).val('');
   };
 
-  let print = function(text) {
-    voice.speak(text);
+  let print = function(text, options) {
+    voice.speak(text, options);
 
     let newItem = $('<li>');
     let itemPlayButton = $('<div class="play-sound-button">');
@@ -51,19 +51,27 @@ $(function() {
 
   let initSpeaker = function () {
     window.speechSynthesis.onvoiceschanged = function() {
-      let msg = new SpeechSynthesisUtterance();
       let voices = speechSynthesis.getVoices();
       let ruVoices = voices.filter(v => v.lang == 'ru-RU')
       let russianVoice = ruVoices.find(v => v.name == 'Yuri') || ruVoices[Math.floor(Math.random()*ruVoices.length)];
-      msg.voice = russianVoice;
-  
-      msg.volume = 1;
-      msg.rate = 0.8;
-      msg.pitch = 0.6;
-  
+      let milena = ruVoices.find(v => v.name == 'Milena');
+
       voice = {
-        speak: function(text) {
+        speak: function(text, options) {
+          let msg = new SpeechSynthesisUtterance();
+          msg.voice = russianVoice;
+          msg.volume = 1;
+          msg.rate = 0.8;
+          msg.pitch = 1;
           msg.text = text;
+
+          if (options) {
+            Object.assign(msg, options);
+
+            if (options.voiceRole == 'milena') {
+              msg.voice = milena;
+            }
+          }
           speechSynthesis.speak(msg);
         }
       }
@@ -71,7 +79,7 @@ $(function() {
   }
   initSpeaker();
 
-  socket.on('new response', function(msg) {
+  socket.on('new response', function(msg, options) {
     emptyIn();
     if (msg && (msg.indexOf('http') > -1 || msg.indexOf('img/') > -1)) {
       let newItem = $('<li class="image-msg">');
@@ -83,7 +91,7 @@ $(function() {
       $($out).append(newItem);
     }
     else {
-      print(msg);
+      print(msg, options);
     }
     scrollTop();
   });

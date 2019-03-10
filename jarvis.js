@@ -42,7 +42,7 @@ app.get('/img/:imgName', function(req, res) {
 app.use(express.static("client"));
 
 let conf = {
-  roundIndex: 0,
+  roundIndex: args.round || 0,
   session: null,
   saveQueue: [],
   socket: {},
@@ -141,7 +141,7 @@ const triggerOutputs = function(socket) {
       if (currentIndex < outputs.length) {
         const currentOutput = outputs[currentIndex];
         setTimeout(function() {
-          emitMessage('new response', currentOutput.text, socket);
+          emitMessage('new response', currentOutput.text, socket, currentOutput.options);
           triggerSingleOutput();
         }, currentOutput.timer);
 
@@ -222,8 +222,8 @@ function randInd(length) {
   return Math.floor(Math.random() * length);
 }
 
-const emitMessage = function(type, msg, socket) {
-  socket.emit(type, msg);
+const emitMessage = function(type, msg, socket, options) {
+  socket.emit(type, msg, options);
 
   if (usedb) {
     conf.session.messages.push(msg);
