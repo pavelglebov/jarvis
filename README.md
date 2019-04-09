@@ -21,7 +21,7 @@ Use `--usedb=true` param to enable logging to Mongo
 
 ### Config format
 
-```
+```js
 {
 	"rounds": [ // scenario rounds
 		{
