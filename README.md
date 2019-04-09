@@ -1,12 +1,13 @@
-### Jarvis is quest-bot with easy customizable scenarios
+Jarvis is quest-bot with easy customizable scenarios
+====================================================
 
-## To run jarvis with default config
+### To run jarvis with default config
 
 ```sh
 node jarvis
 ```
 
-## To run with config from other directory
+### To run with config from other directory
 
 Use `--configPath` and `--config` arguments, e.g.:
 
@@ -14,13 +15,13 @@ Use `--configPath` and `--config` arguments, e.g.:
 node jarvis --configPath=../jarvis-private-configs/ --config=newyear2019
 ```
 
-## Mongo
+### Mongo
 
 Use `--usedb=true` param to enable logging to Mongo
 
-## Config format
+### Config format
 
-```json
+```
 {
 	"rounds": [ // scenario rounds
 		{
@@ -50,4 +51,4 @@ Use `--usedb=true` param to enable logging to Mongo
 }
 ```
 
-## Default voice language is ru-RU, can be changed in client.js
+### Default voice language is ru-RU, can be changed in client.js
