@@ -97,10 +97,14 @@ function restoreSession() {
 
 const processMessage = function(msg, socket) {
   console.log(`Processing message: ${msg}`);
-  let successArr = rounds[conf.roundIndex] && rounds[conf.roundIndex].success;
-  let eggs = rounds[conf.roundIndex] && rounds[conf.roundIndex].eggs;
+  const successArr = rounds[conf.roundIndex] && rounds[conf.roundIndex].success;
+  const eggs = rounds[conf.roundIndex] && rounds[conf.roundIndex].eggs;
 
-  if (successArr && successArr.indexOf(msg) > -1) {
+  const successCriteria = successArr.some((el) => {
+    return msg.includes(el);
+  });
+
+  if (successCriteria) {
     changeRound();
     triggerOutputs(socket);
   }
@@ -193,7 +197,7 @@ io.on('connection', function(socket) {
           socket);
       });
     }
-    if (msg == "подсказка" || msg == "подскажи") {
+    if (msg.includes("подсказка") || msg.includes("подскажи")) {
       let hints = rounds[conf.roundIndex].hints;
 
       if (hints) {
@@ -210,7 +214,7 @@ function handleHints(hints, socket) {
       conf.hintTimer = setTimeout(() => {
           clearTimeout(conf.hintTimer);
           conf.hintTimer = false;
-      }, 60000);
+      }, 10000);
 
       emitMessage('new response',
         hints[randInd(hints.length)],

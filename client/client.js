@@ -76,8 +76,51 @@ $(function() {
         }
       }
     };
-  }
+  };
   initSpeaker();
+
+
+  let recognition;
+  let initRecognition = function() {
+    recognition = new webkitSpeechRecognition();
+    initListener();
+    startListener();
+
+    recognition.onresult = function(event) {
+      let result = event.results[event.results.length - 1];
+      // print(result[0].transcript);
+      console.log('recognitions result: ' + result[0].transcript);
+      socket.emit('new message', result[0].transcript);
+    }
+  };
+  let initListener = function() {
+    // const grammar = '#JSGF V1.0; grammar colors; public <color> = aqua | azure | beige | bisque | black | blue | brown | chocolate | coral | crimson | cyan | fuchsia | ghostwhite | gold | goldenrod | gray | green | indigo | ivory | khaki | lavender | lime | linen | magenta | maroon | moccasin | navy | olive | orange | orchid | peru | pink | plum | purple | red | salmon | sienna | silver | snow | tan | teal | thistle | tomato | turquoise | violet | white | yellow ;'
+    // const recognition = new webkitSpeechRecognition();
+    // const speechRecognitionList = new webkitSpeechGrammarList();
+    // speechRecognitionList.addFromString(grammar, 1);
+    // recognition.grammars = speechRecognitionList;
+    recognition.continuous = true;
+    recognition.lang = 'ru-RU';
+    recognition.interimResults = false;
+    // recognition.maxAlternatives = 1;
+  };
+  let startListener = function() {
+    try {
+      recognition.start();
+    } catch (e) {
+      // console.log(e);
+    }
+  };
+  initRecognition();
+
+
+  setInterval(() => {
+    if (!recognition) {
+      initRecognition();
+    } else {
+      startListener();
+    }
+  }, 1000);
 
   socket.on('new response', function(msg, options) {
     emptyIn();
@@ -93,7 +136,10 @@ $(function() {
     else {
       print(msg, options);
     }
-    scrollTop();
+
+    setTimeout(() => {
+      scrollTop();
+    }, 100)
   });
 
   function scrollTop() {
