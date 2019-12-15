@@ -151,3 +151,15 @@ i:before {
   animation-delay: 3.5s;
   animation-timing-function: ease-in;
 }
+
+.timer {
+  position: absolute;
+  right: 50px;
+  top: 20px;
+  color: red;
+  font-size: 2rem;
+}
+
+.timer > span {
+  color: red;
+}
