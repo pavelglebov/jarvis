@@ -1,3 +1,41 @@
+const useChristmasUI = true;
+
+function setChristmasUI() {
+  document.title = 'Grinch';
+  $('head').append('<link rel="stylesheet" type="text/css" href="./christmas-ui.css">');
+  const grinch = $('<img class="grinch" src="assets/christmas-ui/grinch.gif" alt="grinch">');
+  const $body = $('body');
+  $body.append(grinch);
+  $body.addClass('animating-grinch');
+  $body.append('<div class="snowflakes">' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i><i></i>' +
+    '<i></i><i></i><i></i><i></i>' +
+    '</div>');
+  setTimeout(() => {
+    grinch.remove();
+    $body.removeClass('animating-grinch');
+  }, 3100);
+}
+
+if (useChristmasUI) {
+  setChristmasUI();
+}
+
 $(function() {
   let socket = io();
   let $inp = document.getElementById('in');
