@@ -26,6 +26,7 @@ function setChristmasUI() {
     '<i></i><i></i><i></i><i></i><i></i>' +
     '<i></i><i></i><i></i><i></i>' +
     '</div>');
+  $body.append('<img class="branch" src="assets/christmas-ui/christmas-branch.png" alt="branch"/>');
   setTimeout(() => {
     grinch.remove();
     $body.removeClass('animating-grinch');

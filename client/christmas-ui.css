@@ -6,13 +6,17 @@ body {
 .grinch {
   z-index: 10;
   position: absolute;
-  top: 50%;
+  top: 10%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
 
   width: 340px;
   height: 430px;
   border-radius: 16px;
+}
+
+.in-container {
+  height: 20vh !important;
 }
 
 .in-container,
@@ -24,6 +28,14 @@ body {
 body.animating-grinch > div.in-container,
 body.animating-grinch > div#out {
   opacity: 0;
+}
+
+.branch {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  height: 10vh;
+  transform: translateX(-50%);
 }
 
 
@@ -39,6 +51,7 @@ i,
 i:after,
 i:before {
   background: white;
+  z-index: 5;
 }
 
 i {
