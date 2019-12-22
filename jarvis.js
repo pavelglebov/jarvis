@@ -100,8 +100,14 @@ const processMessage = function(msg, socket) {
   const successArr = rounds[conf.roundIndex] && rounds[conf.roundIndex].success;
   const eggs = rounds[conf.roundIndex] && rounds[conf.roundIndex].eggs;
 
-  const successCriteria = successArr.some((el) => {
-    return msg.includes(el);
+  const successCriteria = successArr.some((successItem) => {
+    if (typeof successItem === 'object') {
+      if (successItem.type === 'regex') {
+        const regex = new RegExp(successItem.regex, 'u');
+        return msg.match(regex);
+      }
+    }
+    return msg.includes(successItem);
   });
 
   if (successCriteria) {
