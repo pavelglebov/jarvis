@@ -49,14 +49,7 @@ $(function() {
     const $body = $('body');
     document.title = 'Grinch';
     $($inp).one('click', () => {
-      const grinch = $('<img class="grinch" src="assets/christmas-ui/grinch.gif" alt="grinch">');
-      $body.append(grinch);
-      $body.addClass('animating-grinch');
-      setTimeout(() => {
-        grinch.remove();
-        $body.removeClass('animating-grinch');
         startCountdown();
-      }, 3100);
     });
     $('head').append('<link rel="stylesheet" type="text/css" href="./christmas-ui.css">');
     $body.append('<div class="snowflakes">' +

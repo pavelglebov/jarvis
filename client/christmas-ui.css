@@ -3,18 +3,6 @@ body {
   overflow: hidden;
 }
 
-.grinch {
-  z-index: 10;
-  position: absolute;
-  top: 10%;
-  left: 50%;
-  transform: translateX(-50%);
-
-  width: 340px;
-  height: 430px;
-  border-radius: 16px;
-}
-
 .in-container {
   height: 20vh !important;
 }
@@ -23,11 +11,6 @@ body {
 #out {
   position: relative;
   z-index: 10;
-}
-
-body.animating-grinch > div.in-container,
-body.animating-grinch > div#out {
-  opacity: 0;
 }
 
 .branch {
