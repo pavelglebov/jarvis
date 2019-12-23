@@ -42,9 +42,11 @@ $(function() {
     }
   });
 
-  $($inp).bind('input', function() {
-    let value = $(this).val();
-    socket.emit('new message', value);
+  $($inp).on('keyup', function(event) {
+    if (event.key === 'Enter') {
+      const value = $(this).val();
+      socket.emit('new message', value);
+    }
   });
 
   let voice;
