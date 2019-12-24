@@ -15,7 +15,7 @@ const configPath = args.configPath || './configs/';
 const configName = args.config || 'initial';
 
 // read config
-const config = require(`${configPath}${configName}/${configName}.json`);
+const config = require(`${configPath}${configName}/${configName}.js`);
 const {
   failMessages = [],
   failMessagesFrequency = 0,
