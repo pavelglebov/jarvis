@@ -22,12 +22,15 @@ const {
   rounds,
   easterEggs,
   jarvis,
+  defaultHintsConfig,
 } = config;
 
 let Session;
 if (usedb) {
   Session = require('./db/main');
 }
+
+let numberOfFailures = 0;
 
 function shouldSendFailMessage() {
   if (conf.roundIndex === 0) {
@@ -111,8 +114,9 @@ function restoreSession() {
 
 const processMessage = function(msg, socket) {
   console.log(`Processing message: ${msg}`);
-  const successArr = rounds[conf.roundIndex] && rounds[conf.roundIndex].success;
-  const eggs = rounds[conf.roundIndex] && rounds[conf.roundIndex].eggs;
+  const currentRound = rounds[conf.roundIndex];
+  const successArr = currentRound && currentRound.success;
+  const currentRoundEggs = currentRound && currentRound.eggs;
 
   const successCriteria = successArr.some((successItem) => {
     return msg === successItem;
@@ -121,15 +125,26 @@ const processMessage = function(msg, socket) {
   if (successCriteria) {
     changeRound();
     triggerOutputs(socket);
-  } else if(shouldSendFailMessage()) {
-    emitMessage('new response', getRandomItem(failMessages), socket);
-  }
+  } else {
+    numberOfFailures++;
+    const hintsConfig = currentRound.hintsConfig || defaultHintsConfig;
 
-  if (eggs && eggs[msg]) {
-    if (eggs[msg].length) {
-      eggs[msg].forEach((el) => {
-        emitMessage('new response', el, socket);
+    if (hintsConfig.includes(numberOfFailures) && currentRound.hints && currentRound.hints.length) {
+      emitMessage('new response', getRandomItem(currentRound.hints), socket);
+    } else if (currentRoundEggs && currentRoundEggs[msg] && currentRoundEggs[msg].length) {
+      currentRoundEggs[msg].forEach((egg) => {
+        emitMessage('new response', egg, socket);
       });
+    } else if (easterEggs[msg]) {
+      easterEggs[msg].forEach((m) => {
+        emitMessage('new response', m, socket);
+      });
+    } else if (msg === 'jarvis' || msg === 'джарвис') {
+      emitMessage('new response', getRandomItem(jarvis), socket);
+    } else if (msg.includes("подсказка") || msg.includes("подскажи")) {
+      handleHints(currentRound.hints, socket);
+    } else if (shouldSendFailMessage()) {
+      emitMessage('new response', getRandomItem(failMessages), socket);
     }
   }
 
@@ -175,6 +190,7 @@ const triggerOutputs = function(socket) {
 
 const changeRound = function() {
   ++conf.roundIndex;
+  numberOfFailures = 0;
   console.log(`Changing round to ${conf.roundIndex}`);
 
   if (usedb) {
@@ -199,29 +215,7 @@ io.on('connection', function(socket) {
   }
 
   socket.on('new message', function(msg) {
-    msg = msg.toLowerCase().trim();
-
-    if (msg == 'jarvis' || msg == 'джарвис') {
-      emitMessage('new response',
-        getRandomItem(jarvis),
-        socket);
-    }
-    if (easterEggs[msg]) {
-      easterEggs[msg].forEach((m) => {
-        emitMessage('new response',
-          m,
-          socket);
-      });
-    }
-    if (msg.includes("подсказка") || msg.includes("подскажи")) {
-      let hints = rounds[conf.roundIndex].hints;
-
-      if (hints) {
-        handleHints(hints, socket);
-      }
-    }
-
-    processMessage(msg, socket);
+    processMessage(msg.toLowerCase().trim(), socket);
   });
 });
 
