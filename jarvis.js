@@ -130,21 +130,21 @@ const processMessage = function(msg, socket) {
     const hintsConfig = currentRound.hintsConfig || defaultHintsConfig;
 
     if (hintsConfig.includes(numberOfFailures) && currentRound.hints && currentRound.hints.length) {
-      emitMessage('new response', getRandomItem(currentRound.hints), socket);
+      respond(getRandomItem(currentRound.hints), socket);
     } else if (currentRoundEggs && currentRoundEggs[msg] && currentRoundEggs[msg].length) {
       currentRoundEggs[msg].forEach((egg) => {
-        emitMessage('new response', egg, socket);
+        respond(egg, socket);
       });
     } else if (easterEggs[msg]) {
       easterEggs[msg].forEach((m) => {
-        emitMessage('new response', m, socket);
+        respond(m, socket);
       });
     } else if (msg === 'jarvis' || msg === 'джарвис') {
-      emitMessage('new response', getRandomItem(jarvis), socket);
+      respond(getRandomItem(jarvis), socket);
     } else if (msg.includes("подсказка") || msg.includes("подскажи")) {
       handleHints(currentRound.hints, socket);
     } else if (shouldSendFailMessage()) {
-      emitMessage('new response', getRandomItem(failMessages), socket);
+      respond(getRandomItem(failMessages), socket);
     }
   }
 
@@ -176,7 +176,7 @@ const triggerOutputs = function(socket) {
       if (currentIndex < outputs.length) {
         const currentOutput = outputs[currentIndex];
         setTimeout(function() {
-          emitMessage('new response', currentOutput.text, socket, currentOutput.options);
+          respond(currentOutput.text, socket, currentOutput.options);
           triggerSingleOutput();
         }, currentOutput.timer);
 
@@ -226,10 +226,12 @@ function handleHints(hints, socket) {
           conf.hintTimer = false;
       }, 10000);
 
-      emitMessage('new response',
-        getRandomItem(hints),
-        socket);
+      respond(getRandomItem(hints), socket);
     }
+}
+
+function respond(message, socket, options) {
+  emitMessage('new response', message, socket, options);
 }
 
 const emitMessage = function(type, msg, socket, options) {
