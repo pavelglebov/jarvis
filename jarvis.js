@@ -5,6 +5,8 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const path = require('path');
 
+const {getRandomItem} = require('./helpers');
+
 // parse process arguments
 const parseArgs = require('./utils/args-parser');
 const args = parseArgs(process.argv);
@@ -14,13 +16,25 @@ const configName = args.config || 'initial';
 
 // read config
 const config = require(`${configPath}${configName}/${configName}.json`);
-const rounds = config.rounds;
-const easterEggs = config.easterEggs;
-const jarvis = config.jarvis;
+const {
+  failMessages = [],
+  failMessagesFrequency = 0,
+  rounds,
+  easterEggs,
+  jarvis,
+} = config;
 
 let Session;
 if (usedb) {
   Session = require('./db/main');
+}
+
+function shouldSendFailMessage() {
+  if (conf.roundIndex === 0) {
+    return false;
+  }
+  const randomNum = Math.random();
+  return randomNum < failMessagesFrequency;
 }
 
 app.get('/', function(req, res, next) {
@@ -107,6 +121,8 @@ const processMessage = function(msg, socket) {
   if (successCriteria) {
     changeRound();
     triggerOutputs(socket);
+  } else if(shouldSendFailMessage()) {
+    emitMessage('new response', getRandomItem(failMessages), socket);
   }
 
   if (eggs && eggs[msg]) {
@@ -187,7 +203,7 @@ io.on('connection', function(socket) {
 
     if (msg == 'jarvis' || msg == 'джарвис') {
       emitMessage('new response',
-        jarvis[randInd(jarvis.length)],
+        getRandomItem(jarvis),
         socket);
     }
     if (easterEggs[msg]) {
@@ -217,13 +233,9 @@ function handleHints(hints, socket) {
       }, 10000);
 
       emitMessage('new response',
-        hints[randInd(hints.length)],
+        getRandomItem(hints),
         socket);
     }
-}
-
-function randInd(length) {
-  return Math.floor(Math.random() * length);
 }
 
 const emitMessage = function(type, msg, socket, options) {
