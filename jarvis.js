@@ -141,7 +141,7 @@ const processMessage = function(msg, socket) {
       });
     } else if (msg === 'jarvis' || msg === 'джарвис') {
       respond(getRandomItem(jarvis), socket);
-    } else if (msg.includes("подсказка") || msg.includes("подскажи")) {
+    } else if ((msg.includes("подсказка") || msg.includes("подскажи")) && currentRound.hints) {
       handleHints(currentRound.hints, socket);
     } else if (shouldSendFailMessage()) {
       respond(getRandomItem(failMessages), socket);
