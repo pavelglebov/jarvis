@@ -11,11 +11,11 @@ const {getRandomItem} = require('./helpers');
 const parseArgs = require('./utils/args-parser');
 const args = parseArgs(process.argv);
 const usedb = args.usedb;
-const configPath = args.configPath || './configs/';
+const configPath = args.configPath || './configs/initial';
 const configName = args.config || 'initial';
 
 // read config
-const config = require(`${configPath}${configName}/${configName}.js`);
+const config = require(`${configPath}/${configName}.js`);
 const {
   failMessages = [],
   failMessagesFrequency = 0,
@@ -50,7 +50,7 @@ app.get('/', function(req, res, next) {
 
 app.get('/img/:imgName', function(req, res) {
   const file = path.join(__dirname,
-      `/${configPath}${configName}/img/${req.params.imgName}`);
+      `/${configPath}/img/${req.params.imgName}`);
 
   console.log(`Sending image: ${file}`);
   res.sendFile(file);
