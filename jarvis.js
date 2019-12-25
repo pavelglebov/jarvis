@@ -11,7 +11,7 @@ const {getRandomItem} = require('./helpers');
 const parseArgs = require('./utils/args-parser');
 const args = parseArgs(process.argv);
 const usedb = args.usedb;
-const configPath = args.configPath || './configs/initial';
+const configPath = args.configPath || './configs/';
 const configName = args.config || 'initial';
 
 // read config
@@ -119,6 +119,12 @@ const processMessage = function(msg, socket) {
   const currentRoundEggs = currentRound && currentRound.eggs;
 
   const successCriteria = successArr.some((successItem) => {
+    if (typeof successItem === 'object') {
+      if (successItem.type === 'regex') {
+        const regex = new RegExp(successItem.regex, 'u');
+        return msg.match(regex);
+      }
+    }
     return msg === successItem;
   });
 
