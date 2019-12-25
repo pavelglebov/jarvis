@@ -72,6 +72,7 @@ $(function() {
       '<i></i><i></i><i></i><i></i>' +
       '</div>');
     $body.append('<img class="branch" src="assets/christmas-ui/christmas-branch.png" alt="branch"/>');
+    $body.append('<img class="grinch" src="assets/christmas-ui/grinch.png" alt="grinch"/>')
   }
 
   if (useChristmasUI) {

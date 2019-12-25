@@ -21,6 +21,13 @@ body {
   transform: translateX(-50%);
 }
 
+.grinch {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  transform: scaleX(-1);
+  opacity: 0.8;
+}
 
 .snowflakes {
   width: 100%;
