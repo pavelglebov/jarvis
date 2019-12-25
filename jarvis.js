@@ -170,6 +170,8 @@ const processMessage = function(msg, socket) {
   }
 }
 
+let nextMessageTimerId;
+
 const triggerOutputs = function(socket) {
   console.log('Triggering outputs');
 
@@ -181,7 +183,8 @@ const triggerOutputs = function(socket) {
     const triggerSingleOutput = function() {
       if (currentIndex < outputs.length) {
         const currentOutput = outputs[currentIndex];
-        setTimeout(function() {
+        nextMessageTimerId = setTimeout(function() {
+          nextMessageTimerId = 0;
           respond(currentOutput.text, socket, currentOutput.options);
           triggerSingleOutput();
         }, currentOutput.timer);
@@ -199,6 +202,9 @@ const changeRound = function() {
   numberOfFailures = 0;
   console.log(`Changing round to ${conf.roundIndex}`);
 
+  if (nextMessageTimerId) {
+    clearTimeout(nextMessageTimerId);
+  }
   if (usedb) {
       conf.session.round = conf.roundIndex;
     // saveSession();
