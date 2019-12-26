@@ -115,6 +115,9 @@ function restoreSession() {
 const processMessage = function(msg, socket) {
   console.log(`Processing message: ${msg}`);
   const currentRound = rounds[conf.roundIndex];
+  if (!currentRound.caseSensitive) {
+    msg = msg.toLowerCase();
+  }
   const successArr = currentRound && currentRound.success;
   const currentRoundEggs = currentRound && currentRound.eggs;
 
@@ -227,7 +230,7 @@ io.on('connection', function(socket) {
   }
 
   socket.on('new message', function(msg) {
-    processMessage(msg.toLowerCase().trim(), socket);
+    processMessage(msg.trim(), socket);
   });
 });
 
