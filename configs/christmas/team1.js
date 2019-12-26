@@ -7,6 +7,13 @@ module.exports = {
     "Ура! Вы смогли найти еще один неверный ответ на этот вопрос",
     "Вы точно помните, что шампанское нагревается? Советую шевелить извилинами активнее"
   ],
+  "failSounds": [
+    "/audio/you will never win.mp3",
+    "/audio/1 sound.mp3",
+    "/audio/2 sound.mp3",
+    "/audio/3 sound.mp3",
+    "/audio/4 sound.mp3"
+  ],
   "failMessagesFrequency": 0.2,
   "defaultHintsConfig": [3, 6],
   "rounds": [

@@ -210,8 +210,9 @@ $(function() {
       $(newItem).append(link);
       let i = 1;
       $($out).append(newItem);
-    }
-    else {
+    } else if (msg && msg.includes('audio/') && msg.endsWith('.mp3')) {
+      new Audio(msg).play();
+    } else {
       print(msg, options);
     }
 

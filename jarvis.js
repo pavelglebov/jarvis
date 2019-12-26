@@ -18,6 +18,7 @@ const configName = args.config || 'initial';
 const config = require(`${configPath}/${configName}.js`);
 const {
   failMessages = [],
+  failSounds = [],
   failMessagesFrequency = 0,
   rounds,
   easterEggs,
@@ -53,6 +54,14 @@ app.get('/img/:imgName', function(req, res) {
       `/${configPath}/img/${req.params.imgName}`);
 
   console.log(`Sending image: ${file}`);
+  res.sendFile(file);
+});
+
+app.get('/audio/:audioName', function(req, res) {
+  const file = path.join(__dirname,
+      `/${configPath}/audio/${req.params.audioName}`);
+
+  console.log(`Sending audio: ${file}`);
   res.sendFile(file);
 });
 
@@ -154,6 +163,8 @@ const processMessage = function(msg, socket) {
       handleHints(currentRound.hints, socket);
     } else if (shouldSendFailMessage()) {
       respond(getRandomItem(failMessages), socket);
+    } else if (shouldSendFailMessage()) { // function response is random and changes every time
+      respond(getRandomItem(failSounds), socket);
     }
   }
 
