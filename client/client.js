@@ -1,7 +1,83 @@
+const useChristmasUI = true;
+
 $(function() {
   let socket = io();
   let $inp = document.getElementById('in');
   let $out = document.getElementById('out');
+
+  function setChristmasUI() {
+    const minutesToSolveQuest = 150;
+
+    function startCountdown() {
+      const ensureHas2Digits = (number) => {
+        const string = String(number);
+        return string.length < 2 ? `0${string}` : string;
+      };
+
+      $body.append('<div class="timer">' +
+        'Time left: ' +
+        '<span id="h">00</span>:' +
+        '<span id="m">00</span>:' +
+        '<span id="s">00</span>' +
+        '</div>');
+      const now = new Date();
+      const deadline = new Date(now.getTime() + minutesToSolveQuest * 60 * 1000);
+      const $hoursElement = $("#h");
+      const $minutesElement = $("#m");
+      const $secondsElement = $("#s");
+      let timerId;
+
+      let countdownHandler = () => {
+        const now = new Date();
+        const remainingTime = new Date(deadline.getTime() - now.getTime());
+        const hours = remainingTime.getUTCHours();
+        const minutes = remainingTime.getUTCMinutes();
+        const seconds = remainingTime.getUTCSeconds();
+
+        $hoursElement.html(ensureHas2Digits(hours));
+        $minutesElement.html(ensureHas2Digits(minutes));
+        $secondsElement.html(ensureHas2Digits(seconds));
+
+        if (remainingTime <= 0) {
+          clearInterval(timerId);
+        }
+      };
+      timerId = setInterval(countdownHandler, 1000);
+      countdownHandler();
+    }
+
+    const $body = $('body');
+    document.title = 'Grinch';
+    $($inp).one('click', () => {
+        startCountdown();
+    });
+    $('head').append('<link rel="stylesheet" type="text/css" href="./christmas-ui.css">');
+    $body.append('<div class="snowflakes">' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i><i></i>' +
+      '<i></i><i></i><i></i><i></i>' +
+      '</div>');
+    $body.append('<img class="branch" src="assets/christmas-ui/christmas-branch.png" alt="branch"/>');
+    $body.append('<img class="grinch" src="assets/christmas-ui/grinch.png" alt="grinch"/>')
+  }
+
+  if (useChristmasUI) {
+    setChristmasUI();
+  }
 
   document.addEventListener('keypress', function(key) {
     if ( key.keyCode != 13 ) $inp.focus();
