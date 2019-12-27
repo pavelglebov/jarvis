@@ -6,7 +6,7 @@ $(function() {
   let $out = document.getElementById('out');
 
   function setChristmasUI() {
-    const minutesToSolveQuest = 150;
+    const minutesToSolveQuest = 100;
 
     function startCountdown() {
       const ensureHas2Digits = (number) => {
