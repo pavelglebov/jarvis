@@ -1,5 +1,11 @@
 const mongoose = require('mongoose');
 const SessionSchema = require('./session');
-mongoose.connect('mongodb://localhost:27017/jarvis', {useNewUrlParser: true});
 
-module.exports = mongoose.model('session', SessionSchema);
+const connect = (dbName) => {
+  mongoose.connect(`mongodb://localhost:27017/${dbName}`, {useNewUrlParser: true});
+  return mongoose.model('session', SessionSchema);
+};
+
+module.exports = {
+  connect,
+};

@@ -24,11 +24,14 @@ const {
   easterEggs,
   jarvis,
   defaultHintsConfig,
+  port = '3000',
+  dbName = 'jarvis',
 } = config;
 
 let Session;
 if (usedb) {
-  Session = require('./db/main');
+  const {connect} = require('./db/main');
+  Session = connect(dbName)
 }
 
 let numberOfFailures = 0;
@@ -289,6 +292,6 @@ const initSaveInterval = function() {
   }
 };
 
-http.listen(3000, function() {
-  console.log('listening on *:3000');
+http.listen(port, function() {
+  console.log(`listening on *:${port}`);
 });
