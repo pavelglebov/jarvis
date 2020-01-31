@@ -5,6 +5,8 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const path = require('path');
 
+const {getRandomItem} = require('./helpers');
+
 // parse process arguments
 const parseArgs = require('./utils/args-parser');
 const args = parseArgs(process.argv);
@@ -13,14 +15,33 @@ const configPath = args.configPath || './configs/';
 const configName = args.config || 'initial';
 
 // read config
-const config = require(`${configPath}${configName}/${configName}.json`);
-const rounds = config.rounds;
-const easterEggs = config.easterEggs;
-const jarvis = config.jarvis;
+const config = require(`${configPath}/${configName}.js`);
+const {
+  failMessages = [],
+  failSounds = [],
+  failMessagesFrequency = 0,
+  rounds,
+  easterEggs,
+  jarvis,
+  defaultHintsConfig,
+  port = '3000',
+  dbName = 'jarvis',
+} = config;
 
 let Session;
 if (usedb) {
-  Session = require('./db/main');
+  const {connect} = require('./db/main');
+  Session = connect(dbName)
+}
+
+let numberOfFailures = 0;
+
+function shouldSendFailMessage() {
+  if (conf.roundIndex === 0) {
+    return false;
+  }
+  const randomNum = Math.random();
+  return randomNum < failMessagesFrequency;
 }
 
 app.get('/', function(req, res, next) {
@@ -33,9 +54,17 @@ app.get('/', function(req, res, next) {
 
 app.get('/img/:imgName', function(req, res) {
   const file = path.join(__dirname,
-      `/${configPath}${configName}/img/${req.params.imgName}`);
+      `/${configPath}/img/${req.params.imgName}`);
 
   console.log(`Sending image: ${file}`);
+  res.sendFile(file);
+});
+
+app.get('/audio/:audioName', function(req, res) {
+  const file = path.join(__dirname,
+      `/${configPath}/audio/${req.params.audioName}`);
+
+  console.log(`Sending audio: ${file}`);
   res.sendFile(file);
 });
 
@@ -97,23 +126,48 @@ function restoreSession() {
 
 const processMessage = function(msg, socket) {
   console.log(`Processing message: ${msg}`);
-  const successArr = rounds[conf.roundIndex] && rounds[conf.roundIndex].success;
-  const eggs = rounds[conf.roundIndex] && rounds[conf.roundIndex].eggs;
+  const currentRound = rounds[conf.roundIndex];
+  if (!currentRound.caseSensitive) {
+    msg = msg.toLowerCase();
+  }
+  const successArr = currentRound && currentRound.success;
+  const currentRoundEggs = currentRound && currentRound.eggs;
 
-  const successCriteria = successArr.some((el) => {
-    return msg.includes(el);
+  const successCriteria = successArr.some((successItem) => {
+    if (typeof successItem === 'object') {
+      if (successItem.type === 'regex') {
+        const regex = new RegExp(successItem.regex, 'u');
+        return msg.match(regex);
+      }
+    }
+    return msg === successItem;
   });
 
   if (successCriteria) {
     changeRound();
     triggerOutputs(socket);
-  }
+  } else {
+    numberOfFailures++;
+    const hintsConfig = currentRound.hintsConfig || defaultHintsConfig;
 
-  if (eggs && eggs[msg]) {
-    if (eggs[msg].length) {
-      eggs[msg].forEach((el) => {
-        emitMessage('new response', el, socket);
+    if (hintsConfig.includes(numberOfFailures) && currentRound.hints && currentRound.hints.length) {
+      respond(getRandomItem(currentRound.hints), socket);
+    } else if (currentRoundEggs && currentRoundEggs[msg] && currentRoundEggs[msg].length) {
+      currentRoundEggs[msg].forEach((egg) => {
+        respond(egg, socket);
       });
+    } else if (easterEggs[msg]) {
+      easterEggs[msg].forEach((m) => {
+        respond(m, socket);
+      });
+    } else if (msg === 'jarvis' || msg === 'джарвис') {
+      respond(getRandomItem(jarvis), socket);
+    } else if ((msg.includes("подсказка") || msg.includes("подскажи")) && currentRound.hints) {
+      handleHints(currentRound.hints, socket);
+    } else if (shouldSendFailMessage()) {
+      respond(getRandomItem(failMessages), socket);
+    } else if (shouldSendFailMessage()) { // function response is random and changes every time
+      respond(getRandomItem(failSounds), socket);
     }
   }
 
@@ -133,6 +187,8 @@ const processMessage = function(msg, socket) {
   }
 }
 
+let nextMessageTimerId;
+
 const triggerOutputs = function(socket) {
   console.log('Triggering outputs');
 
@@ -144,8 +200,9 @@ const triggerOutputs = function(socket) {
     const triggerSingleOutput = function() {
       if (currentIndex < outputs.length) {
         const currentOutput = outputs[currentIndex];
-        setTimeout(function() {
-          emitMessage('new response', currentOutput.text, socket, currentOutput.options);
+        nextMessageTimerId = setTimeout(function() {
+          nextMessageTimerId = 0;
+          respond(currentOutput.text, socket, currentOutput.options);
           triggerSingleOutput();
         }, currentOutput.timer);
 
@@ -159,8 +216,12 @@ const triggerOutputs = function(socket) {
 
 const changeRound = function() {
   ++conf.roundIndex;
+  numberOfFailures = 0;
   console.log(`Changing round to ${conf.roundIndex}`);
 
+  if (nextMessageTimerId) {
+    clearTimeout(nextMessageTimerId);
+  }
   if (usedb) {
       conf.session.round = conf.roundIndex;
     // saveSession();
@@ -183,29 +244,7 @@ io.on('connection', function(socket) {
   }
 
   socket.on('new message', function(msg) {
-    msg = msg.toLowerCase().trim();
-
-    if (msg == 'jarvis' || msg == 'джарвис') {
-      emitMessage('new response',
-        jarvis[randInd(jarvis.length)],
-        socket);
-    }
-    if (easterEggs[msg]) {
-      easterEggs[msg].forEach((m) => {
-        emitMessage('new response',
-          m,
-          socket);
-      });
-    }
-    if (msg.includes("подсказка") || msg.includes("подскажи")) {
-      let hints = rounds[conf.roundIndex].hints;
-
-      if (hints) {
-        handleHints(hints, socket);
-      }
-    }
-
-    processMessage(msg, socket);
+    processMessage(msg.trim(), socket);
   });
 });
 
@@ -216,14 +255,12 @@ function handleHints(hints, socket) {
           conf.hintTimer = false;
       }, 10000);
 
-      emitMessage('new response',
-        hints[randInd(hints.length)],
-        socket);
+      respond(getRandomItem(hints), socket);
     }
 }
 
-function randInd(length) {
-  return Math.floor(Math.random() * length);
+function respond(message, socket, options) {
+  emitMessage('new response', message, socket, options);
 }
 
 const emitMessage = function(type, msg, socket, options) {
@@ -255,6 +292,6 @@ const initSaveInterval = function() {
   }
 };
 
-http.listen(3000, function() {
-  console.log('listening on *:3000');
+http.listen(port, function() {
+  console.log(`listening on *:${port}`);
 });

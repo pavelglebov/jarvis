@@ -6,7 +6,7 @@ $(function() {
   let $out = document.getElementById('out');
 
   function setChristmasUI() {
-    const minutesToSolveQuest = 150;
+    const minutesToSolveQuest = 100;
 
     function startCountdown() {
       const ensureHas2Digits = (number) => {
@@ -118,9 +118,11 @@ $(function() {
     }
   });
 
-  $($inp).bind('input', function() {
-    let value = $(this).val();
-    socket.emit('new message', value);
+  $($inp).on('keyup', function(event) {
+    if (event.key === 'Enter') {
+      const value = $(this).val();
+      socket.emit('new message', value);
+    }
   });
 
   let voice;
@@ -208,8 +210,9 @@ $(function() {
       $(newItem).append(link);
       let i = 1;
       $($out).append(newItem);
-    }
-    else {
+    } else if (msg && msg.includes('audio/') && msg.endsWith('.mp3')) {
+      new Audio(msg).play();
+    } else {
       print(msg, options);
     }
 
